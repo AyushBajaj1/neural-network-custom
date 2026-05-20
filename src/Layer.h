@@ -4,6 +4,7 @@
 
 class Layer {
     public:
+        
         Layer(int input_size, int output_size) {
             // neurons.resize(input_size);
             outputs.resize(output_size);
@@ -18,10 +19,21 @@ class Layer {
                 neurons[i].ForwardPass(inputs);
                 outputs[i]=neurons[i].GetOutput();
             }
+            
+        }
+
+        void BackwardPass(const std::vector<double>& param_deriv, const std::vector<double>& inputs) {
+            for (size_t i = 0; i<param_deriv.size(); i++) {
+                neurons[i].BackwardPass(param_deriv[i], inputs);
+            }
         }
 
         std::vector<double> GetOutputs() {
             return outputs;
+        }
+
+        std::vector<Neuron> GetNeurons() {
+            return neurons;
         }
 
     private:
@@ -29,3 +41,4 @@ class Layer {
         std::vector<Neuron> neurons;
 
 };
+
