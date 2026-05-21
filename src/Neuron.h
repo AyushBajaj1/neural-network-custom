@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <random>
 #include <stdexcept>
+#include <cmath>
 
 
 int dotProduct(const std::vector<double>& a, const std::vector<double>& b) {
@@ -35,6 +36,22 @@ class Neuron {
             output = 0.0;
         }
 
+        Neuron(int number_of_weights, std::string activation) {
+            this->activation = activation;
+            weights.resize(number_of_weights);
+
+            // std::random_device rd;
+            static std::mt19937 gen(42);
+            std::uniform_real_distribution<double> dist(-1.0, 1.0);
+        
+            for (int i = 0; i<number_of_weights; i++) {
+                weights[i]=dist(gen);
+            }
+
+            bias = 0.0;
+            output = 0.0;
+         }
+
         void ForwardPass(const std::vector<double>& inputs) {
             
             if (inputs.size()!=weights.size()) {
@@ -43,12 +60,22 @@ class Neuron {
             
             output = dotProduct(inputs,weights);
             output+=bias;
-            output = ReLU(output);
+
+            if (activation == "ReLU") {
+                output = ReLU(output);
+            }
+            else if (activation == "Linear" ) {
+                output*=1;
+            }
+            else {
+                std::cout<<"activation: "<<activation<<std::endl;
+                throw std::runtime_error("activation function not specified properly");
+            }
         }
 
         void BackwardPass(double deriv, const std::vector<double>& inputs) {
             for (size_t i = 0; i<weights.size(); i++) {
-                weights[i]-=deriv*inputs[i]*lr;
+                weights[i]-= output!=0 ? deriv*inputs[i]*lr : 0;
             }
             bias-=deriv*lr;
         }
@@ -64,8 +91,8 @@ class Neuron {
     private:
         double bias = 0.0;
         std::vector<double> weights;
-        double lr = .0001;
-
+        double lr = .1;
+        std::string activation = "ReLU";
         double output = 0.0;
 };
 

@@ -9,10 +9,17 @@ class Network {
                 throw std::invalid_argument("last size in layer_sizes must match output data size"); 
             }
             
-            Layer h1 = Layer(input_data.size(),layer_sizes[0]);
+            Layer h1 = Layer(input_data.size(),layer_sizes[0], "ReLU");
             layers.push_back(h1);
             for (unsigned i = 1; i<layer_sizes.size(); i++) {
-                layers.push_back(Layer(layer_sizes[i-1],layer_sizes[i]));
+                if (i==layer_sizes.size()-1) {
+                    layers.push_back(Layer(layer_sizes[i-1],layer_sizes[i], "Linear"));
+                }
+                else {
+                    layers.push_back(Layer(layer_sizes[i-1],layer_sizes[i], "ReLU"));
+                }
+                
+                
             }
         }
 
