@@ -5,19 +5,18 @@
 class Layer {
     public:
         
-        Layer(int input_size, int output_size) {
+        // Layer(int input_size, int output_size) {
+        //     outputs.resize(output_size);
+        //     for (int i = 0; i<output_size; i++) {
+        //         neurons.push_back(Neuron(input_size,activation));
+        //     }
+
+        // }
+
+        Layer(int input_size, int output_size, std::string activation, double learning_rate) { 
             outputs.resize(output_size);
             for (int i = 0; i<output_size; i++) {
-                neurons.push_back(Neuron(input_size,activation));
-            }
-
-        }
-
-        Layer(int input_size, int output_size, std::string activation) { 
-            this->activation = activation;
-            outputs.resize(output_size);
-            for (int i = 0; i<output_size; i++) {
-                neurons.push_back(Neuron(input_size,activation));
+                neurons.push_back(Neuron(input_size,activation, learning_rate));
             }
         }
 
@@ -46,7 +45,5 @@ class Layer {
     private:
         std::vector<double> outputs;
         std::vector<Neuron> neurons;
-        std::string activation;
-
 };
 

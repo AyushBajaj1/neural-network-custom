@@ -36,8 +36,10 @@ class Neuron {
             output = 0.0;
         }
 
-        Neuron(int number_of_weights, std::string activation) {
+        Neuron(int number_of_weights, std::string activation, double learning_rate) {
             this->activation = activation;
+            lr=learning_rate;
+            
             weights.resize(number_of_weights);
 
             // std::random_device rd;
@@ -77,7 +79,7 @@ class Neuron {
             for (size_t i = 0; i<weights.size(); i++) {
                 weights[i]-= output!=0 ? deriv*inputs[i]*lr : 0;
             }
-            bias-=deriv*lr;
+            bias-= output!=0 ? deriv*lr : 0;
         }
 
         std::vector<double> GetWeights() {
@@ -91,7 +93,7 @@ class Neuron {
     private:
         double bias = 0.0;
         std::vector<double> weights;
-        double lr = .1;
+        double lr = .0001;
         std::string activation = "ReLU";
         double output = 0.0;
 };

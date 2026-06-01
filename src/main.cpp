@@ -1,5 +1,8 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "Network.h"
+
 
 // template <typename T>
 void PrintVector(const std::vector<double>& vec) {
@@ -34,37 +37,62 @@ std::vector<double> NormalizedVector(const std::vector<double>& vec) {
 
 int main () {
 
-    std::vector<double> input_data = {4.5 , 5.6 , 7.8 , 10 , 11 , 15 , 15.1};
-    std::vector<double> output_data = {16.1,45,19,1,2,18};
-
-    // input_data = NormalizedVector(input_data);
-    // output_data = NormalizedVector(output_data);
-    //uncomment if you want to see the data turned into z-scores with respect to its own mean and std dev
-
-    std::cout<<"input:";
-    PrintVector(input_data);
-    std::cout<<"output:";
-    PrintVector(output_data);
-    
-
-    std::vector<size_t> layer_sizes = {15,6,10,15,6};
-    Network nn = Network(layer_sizes,input_data, output_data);
-    nn.ForwardPass();
-    std::vector<double> generated_outputs = nn.FinalOutput();
-    std::cout<<"pred: ";
-    PrintVector(generated_outputs);
-    for (int i = 0; i<75; i++) {
-        nn.BackwardPass();
-        nn.ForwardPass();
-        generated_outputs = nn.FinalOutput();
-        std::cout<<"pred: ";
-        PrintVector(generated_outputs);
+    //-------Reading in Data-------
+    std::ifstream ifs("../data/sample_data.csv");
+    if (!ifs.is_open()) {
+        std::cerr<<"file unopened!"<<std::endl;
     }
+    std::string line;
+    std::vector<std::vector<double>> rows;
+
+    while (std::getline(ifs,line)) {
+        std::vector<double> row;
+        std::stringstream ss(line);
+        std::string entry;
+        while (std::getline(ss,entry,',')) {
+            row.push_back(std::stod(entry));
+        }
+        rows.push_back(row);
+    }
+
+    //-------Input-Output Split-------
+    std::vector<std::vector<double>> input_data;
+    std::vector<std::vector<double>> output_data;
+    for (const std::vector<double>& vec : rows) {
+        input_data.push_back(std::vector(vec.begin(),vec.begin()+vec.size()-1));
+        output_data.push_back(std::vector(vec.begin()+vec.size()-1,vec.end()));
+    }
+
+    //-------Train-Test Split-------
+    std::vector<std::vector<double>> input_test(input_data.begin(),input_data.begin()+input_data.size()/5);
+    std::vector<std::vector<double>> input_train(input_data.begin()+input_data.size()/5,input_data.end());
+    std::vector<std::vector<double>> output_test(output_data.begin(),output_data.begin()+output_data.size()/5);
+    std::vector<std::vector<double>> output_train(output_data.begin()+output_data.size()/5,output_data.end());
+
+    //-------Creating Neural Network-------
+    std::vector<size_t> layer_sizes = {16,1}; //0th layer is the first hidden layer, last layer is the output layer. So size of output vectors must equal the last number in layer_sizes
+    double learning_rate = .0001;
+    Network nn = Network(layer_sizes, input_train, output_train, learning_rate);
+
+
+    //-------Training Loop-------
+    for (unsigned int epoch = 0; epoch<500; epoch++) {
+        nn.ForwardBackwardPass(output_train.size()); //Peforms a forward pass followed by a backward pass on every single input-output pairing in the train split.
+    }
+
     
-    std::cout<<"input:";
-    PrintVector(input_data);
-    std::cout<<"output:";
-    PrintVector(output_data);
+    //-------Testing-------
+    std::vector<std::vector<double>> predicted_output = nn.Test(input_test);
+    double mae = 0.0;
+    for (size_t i = 0; i<predicted_output.size(); i++) {
+        std::cout<<"predicted: "; PrintVector(predicted_output[i]);
+        std::cout<<"expected: "; PrintVector(output_test[i]);
+        mae += std::abs(predicted_output[i][0]-output_test[i][0]); //i know these are 1x1 vectors, so i'm indexing by 0.
+    }
+    mae/=predicted_output.size();
+    std::cout<<"Final MAE is "<<mae<<std::endl;
+    std::cout<<"Error relative to range (NMAE) is "<<(mae/40)*100<<"%"<<std::endl;
+   
 
     return 0;
 }
