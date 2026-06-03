@@ -1,2 +1,0 @@
-sample_data.csv was made from: 
-

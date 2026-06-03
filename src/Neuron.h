@@ -5,7 +5,7 @@
 #include <cmath>
 
 
-int dotProduct(const std::vector<double>& a, const std::vector<double>& b) {
+double dotProduct(const std::vector<double>& a, const std::vector<double>& b) {
     double result = 0.0;
     for (size_t i = 0; i<a.size(); i++) {
         result += a[i]*b[i];
@@ -21,28 +21,28 @@ class Neuron {
     public:
         Neuron() = default;
 
-        Neuron(int number_of_weights) {
-            weights.resize(number_of_weights);
+        // Neuron(int number_of_weights) {
+        //     weights.resize(number_of_weights);
 
-            // std::random_device rd;
-            static std::mt19937 gen(42);
-            std::uniform_real_distribution<double> dist(-1.0, 1.0);
+        //     // std::random_device rd;
+        //     static std::mt19937 gen(42);
+        //     std::uniform_real_distribution<double> dist(-1.0, 1.0);
         
-            for (int i = 0; i<number_of_weights; i++) {
-                weights[i]=dist(gen);
-            }
+        //     for (int i = 0; i<number_of_weights; i++) {
+        //         weights[i]=dist(gen);
+        //     }
 
-            bias = 0.0;
-            output = 0.0;
-        }
+        //     bias = 0.0;
+        //     output = 0.0;
+        // }
 
         Neuron(int number_of_weights, std::string activation, double learning_rate) {
             this->activation = activation;
             lr=learning_rate;
-            
+
             weights.resize(number_of_weights);
 
-            // std::random_device rd;
+            std::random_device rd;
             static std::mt19937 gen(42);
             std::uniform_real_distribution<double> dist(-1.0, 1.0);
         
@@ -69,6 +69,13 @@ class Neuron {
             else if (activation == "Linear" ) {
                 output*=1;
             }
+            else if (activation == "Softmax") {
+                output = std::exp(output);
+                if (output==output) {
+                    std::cout<<"o:"<<output<<std::endl;
+                }
+                
+            }
             else {
                 std::cout<<"activation: "<<activation<<std::endl;
                 throw std::runtime_error("activation function not specified properly");
@@ -93,8 +100,8 @@ class Neuron {
     private:
         double bias = 0.0;
         std::vector<double> weights;
-        double lr = .0001;
-        std::string activation = "ReLU";
+        double lr = .001;
+        std::string activation = "";
         double output = 0.0;
 };
 

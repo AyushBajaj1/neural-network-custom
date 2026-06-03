@@ -4,25 +4,21 @@
 
 class Network {
     public:
-        Network(std::vector<size_t> layer_sizes, std::vector<std::vector<double>>& input_data, std::vector<std::vector<double>>& output_data, double learning_rate) : input_data(input_data), output_data(output_data) {
+        Network(std::vector<size_t> layer_sizes, std::vector<std::vector<double>>& input_data, std::vector<std::vector<double>>& output_data, double learning_rate, std::vector<std::string>& activations) : input_data(input_data), output_data(output_data) {
             if (layer_sizes[layer_sizes.size()-1]!=output_data[0].size()) {
                 throw std::invalid_argument("last size in layer_sizes must match output data size"); 
             }
             if (input_data.size()!=output_data.size()) {
                 throw std::invalid_argument("input and output training data don't have equal size"); 
             }
+            if (layer_sizes.size()!=activations.size()) {
+                throw std::invalid_argument("number of layers must match number of activation functions");
+            }
             
-            Layer h1 = Layer(input_data[0].size(),layer_sizes[0], "ReLU", learning_rate);
+            Layer h1 = Layer(input_data[0].size(),layer_sizes[0], activations[0], learning_rate);
             layers.push_back(h1);
             for (unsigned i = 1; i<layer_sizes.size(); i++) {
-                if (i==layer_sizes.size()-1) {
-                    layers.push_back(Layer(layer_sizes[i-1],layer_sizes[i], "Linear", learning_rate));
-                }
-                else {
-                    layers.push_back(Layer(layer_sizes[i-1],layer_sizes[i], "ReLU", learning_rate));
-                }
-                
-                
+                layers.push_back(Layer(layer_sizes[i-1],layer_sizes[i], activations[i], learning_rate));
             }
         }
 
@@ -70,10 +66,11 @@ class Network {
             std::vector<double> old_a_deriv = MSELoss_deriv;
             for (int k = layers.size()-2; k>=0; k--) {
                 std::vector<double> a_deriv;
-                for (size_t i = 0; i<layers[k].GetNeurons().size(); i++) {
-                    a_deriv[i] = dotProduct(old_a_deriv, layers[k].GetNeurons()[i].GetWeights());
-                    old_a_deriv = a_deriv;
+                a_deriv.resize(layers[k+1].GetNeurons().size());
+                for (size_t i = 0; i<layers[k+1].GetNeurons().size(); i++) {
+                    a_deriv[i] = dotProduct(old_a_deriv, layers[k+1].GetNeurons()[i].GetWeights());
                 }
+                old_a_deriv = a_deriv;
                 if (k==0) {
                     layers[k].BackwardPass(a_deriv, input_data);
                 }

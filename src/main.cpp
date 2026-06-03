@@ -70,13 +70,15 @@ int main () {
     std::vector<std::vector<double>> output_train(output_data.begin()+output_data.size()/5,output_data.end());
 
     //-------Creating Neural Network-------
-    std::vector<size_t> layer_sizes = {16,1}; //0th layer is the first hidden layer, last layer is the output layer. So size of output vectors must equal the last number in layer_sizes
-    double learning_rate = .0001;
-    Network nn = Network(layer_sizes, input_train, output_train, learning_rate);
+    std::vector<size_t> layer_sizes = {16,1}; //0th layer is the first hidden layer, last layer is the output layer. So size of output vectors must equal the last number in layer_sizes (just 1 in this case because they're scalars) 
+    std::vector<std::string> activations = {"ReLU","Linear"}; //first hidden layer ReLU, output layer needs to be Linear so negative outputs can be produced
+    
+    double learning_rate = .00001;
+    Network nn = Network(layer_sizes, input_train, output_train, learning_rate, activations);
 
 
     //-------Training Loop-------
-    for (unsigned int epoch = 0; epoch<500; epoch++) {
+    for (unsigned int epoch = 0; epoch<10000; epoch++) {
         nn.ForwardBackwardPass(output_train.size()); //Peforms a forward pass followed by a backward pass on every single input-output pairing in the train split.
     }
 

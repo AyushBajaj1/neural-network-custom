@@ -1,6 +1,8 @@
 TARGET = main
 
-CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -MMD -MP
+CXX = g++-15
+
+CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -MMD -MP 
 SRCS = $(wildcard *.cpp)
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(OBJS:.o=.d)
