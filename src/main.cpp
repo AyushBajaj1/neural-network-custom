@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include "Network.h"
+#include "Matrix.h"
 
 
 // template <typename T>
@@ -71,7 +72,7 @@ int main () {
 
     //-------Creating Neural Network-------
     std::vector<size_t> layer_sizes = {16,1}; //0th layer is the first hidden layer, last layer is the output layer. So size of output vectors must equal the last number in layer_sizes (just 1 in this case because they're scalars) 
-    std::vector<std::string> activations = {"ReLU","Linear"}; //first hidden layer ReLU, output layer needs to be Linear so negative outputs can be produced
+    std::vector<std::string> activations = {"ReLU","Linear"}; //first hidden layer is ReLU, output layer needs to be Linear so negative outputs can be produced
     
     double learning_rate = .00001;
     Network nn = Network(layer_sizes, input_train, output_train, learning_rate, activations);

@@ -3,7 +3,8 @@ TARGET = main
 CXX = g++-15
 
 CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -MMD -MP 
-SRCS = $(wildcard *.cpp)
+# SRCS = $(wildcard *.cpp)
+SRCS = main.cpp
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(OBJS:.o=.d)
 
