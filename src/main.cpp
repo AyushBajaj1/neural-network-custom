@@ -1,100 +1,39 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include "Network.h"
-#include "Matrix.h"
-
-
-// template <typename T>
-void PrintVector(const std::vector<double>& vec) {
-    std::cout<<"[";
-    for (unsigned i = 0; i<vec.size(); i++) {
-        std::cout<<vec[i]<<", ";
-    }
-    std::cout<<"]"<<std::endl;
-}
-
-std::vector<double> NormalizedVector(const std::vector<double>& vec) {
-    double sum = 0;
-    for (const double& num : vec) {
-        sum+=num;
-    }
-    double mean = sum/vec.size();
-
-    double var = 0;
-    for (const double& num : vec) {
-        var+=((num-mean)*(num-mean));
-    }
-    var/=(vec.size()-1);
-    double sd = std::sqrt(var);
-
-    std::vector<double> normalized;
-    for (const double& num : vec) {
-        normalized.push_back((num-mean)/sd);
-    }
-
-    return normalized;
-}
 
 int main () {
 
-    //-------Reading in Data-------
-    std::ifstream ifs("../data/sample_data.csv");
-    if (!ifs.is_open()) {
-        std::cerr<<"file unopened!"<<std::endl;
-    }
-    std::string line;
-    std::vector<std::vector<double>> rows;
-
-    while (std::getline(ifs,line)) {
-        std::vector<double> row;
-        std::stringstream ss(line);
-        std::string entry;
-        while (std::getline(ss,entry,',')) {
-            row.push_back(std::stod(entry));
-        }
-        rows.push_back(row);
-    }
-
-    //-------Input-Output Split-------
-    std::vector<std::vector<double>> input_data;
-    std::vector<std::vector<double>> output_data;
-    for (const std::vector<double>& vec : rows) {
-        input_data.push_back(std::vector(vec.begin(),vec.begin()+vec.size()-1));
-        output_data.push_back(std::vector(vec.begin()+vec.size()-1,vec.end()));
-    }
-
-    //-------Train-Test Split-------
-    std::vector<std::vector<double>> input_test(input_data.begin(),input_data.begin()+input_data.size()/5);
-    std::vector<std::vector<double>> input_train(input_data.begin()+input_data.size()/5,input_data.end());
-    std::vector<std::vector<double>> output_test(output_data.begin(),output_data.begin()+output_data.size()/5);
-    std::vector<std::vector<double>> output_train(output_data.begin()+output_data.size()/5,output_data.end());
-
-    //-------Creating Neural Network-------
-    std::vector<size_t> layer_sizes = {16,1}; //0th layer is the first hidden layer, last layer is the output layer. So size of output vectors must equal the last number in layer_sizes (just 1 in this case because they're scalars) 
-    std::vector<std::string> activations = {"ReLU","Linear"}; //first hidden layer is ReLU, output layer needs to be Linear so negative outputs can be produced
     
+    Matrix data;
+    data.read_csv("./data/sample_data.csv");
+    
+    Matrix input_data = data.splice_cols(0,2);
+    Matrix output_data = data.splice_cols(2,3);
+
+    Matrix input_train = input_data.splice_rows(input_data.get_rows()/5,input_data.get_rows()); 
+    Matrix output_train = output_data.splice_rows(output_data.get_rows()/5,output_data.get_rows()); 
+    Matrix input_test = input_data.splice_rows(0,input_data.get_rows()/5);
+    Matrix output_test = output_data.splice_rows(0,output_data.get_rows()/5);
+    
+    
+
+    std::vector<size_t> layer_sizes = {2,16,1}; 
+    std::vector<std::string> hidden_activations = {"relu"}; 
+    std::string loss = "mse";
+    Network nn = Network(layer_sizes, hidden_activations, loss);
+
+
     double learning_rate = .00001;
-    Network nn = Network(layer_sizes, input_train, output_train, learning_rate, activations);
+    size_t batch_size = 100;
+    size_t epochs = 10000;
+    nn.fit(input_train, output_train, learning_rate, batch_size, epochs);
 
 
-    //-------Training Loop-------
-    for (unsigned int epoch = 0; epoch<10000; epoch++) {
-        nn.ForwardBackwardPass(output_train.size()); //Peforms a forward pass followed by a backward pass on every single input-output pairing in the train split.
+    Matrix predicted_output = nn.Test(input_test,1);
+    for (size_t i = 0; i<predicted_output.get_rows(); i++) {
+        std::cout<<predicted_output.at(i,0)<<", "<<output_test.at(i,0)<<std::endl;
     }
 
-    
-    //-------Testing-------
-    std::vector<std::vector<double>> predicted_output = nn.Test(input_test);
-    double mae = 0.0;
-    for (size_t i = 0; i<predicted_output.size(); i++) {
-        std::cout<<"predicted: "; PrintVector(predicted_output[i]);
-        std::cout<<"expected: "; PrintVector(output_test[i]);
-        mae += std::abs(predicted_output[i][0]-output_test[i][0]); //i know these are 1x1 vectors, so i'm indexing by 0.
-    }
-    mae/=predicted_output.size();
-    std::cout<<"Final MAE is "<<mae<<std::endl;
-    std::cout<<"Error relative to range (NMAE) is "<<(mae/40)*100<<"%"<<std::endl;
+    std::cout<<nn.nmae_accuracy(input_test, output_test)<<"%"<<std::endl;
    
 
     return 0;

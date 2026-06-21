@@ -1,93 +1,135 @@
 #pragma once 
 
-#include "Layer.h"
+#include "Matrix.h"
 
 class Network {
     public:
-        Network(std::vector<size_t> layer_sizes, std::vector<std::vector<double>>& input_data, std::vector<std::vector<double>>& output_data, double learning_rate, std::vector<std::string>& activations) : input_data(input_data), output_data(output_data) {
-            if (layer_sizes[layer_sizes.size()-1]!=output_data[0].size()) {
-                throw std::invalid_argument("last size in layer_sizes must match output data size"); 
+
+        Network(std::vector<size_t> layer_sizes, std::vector<std::string> hidden_activations, std::string loss) : activations(hidden_activations), loss(loss){
+            if (layer_sizes.size()<3) throw std::invalid_argument("must have at least 3 layers"); 
+            if (layer_sizes.size()!=hidden_activations.size()+2) throw std::invalid_argument("number of activation functions must match number of hidden layers");
+
+            for (size_t i = 0; i<layer_sizes.size()-1; i++) {
+                layer_weights.push_back(Matrix(layer_sizes[i],layer_sizes[i+1]).randfill(1));
+                layer_biases.push_back(Matrix(1,layer_sizes[i+1]).randfill(1));
             }
-            if (input_data.size()!=output_data.size()) {
-                throw std::invalid_argument("input and output training data don't have equal size"); 
+
+            layer_outputs.resize(layer_weights.size());
+            weight_updates.resize(layer_weights.size());
+            bias_updates.resize(layer_biases.size());
+
+            if (loss=="mse") activations.push_back("linear");
+            if (loss=="cross-entropy") activations.push_back("softmax");
+        }
+
+        void fit(const Matrix& input_data, const Matrix& output_data, double learning_rate, size_t batch_size, size_t epochs) {
+            this->learning_rate = learning_rate;
+
+            for (size_t i = 0; i<epochs; i++) {
+                for (size_t j = 0; j<input_data.get_rows(); j+=batch_size) { 
+                    
+                    if (j + batch_size > input_data.get_rows()) {
+                        ForwardPass(input_data.splice_rows(j,input_data.get_rows()));
+                        BackwardPass(input_data.splice_rows(j,input_data.get_rows()),output_data.splice_rows(j,input_data.get_rows()));
+                        break;
+                    }
+
+                    ForwardPass(input_data.splice_rows(j,j+batch_size));
+                    BackwardPass(input_data.splice_rows(j,j+batch_size),output_data.splice_rows(j,j+batch_size));
+                    // std::cout<<i<<" "<<j<<std::endl;
+                }
             }
-            if (layer_sizes.size()!=activations.size()) {
-                throw std::invalid_argument("number of layers must match number of activation functions");
+        }
+
+        void ForwardPass(const Matrix& input_data_batch) {
+            for (size_t i = 0; i<layer_weights.size(); i++) {
+                if (i==0) {
+                    layer_outputs[i] = input_data_batch.matmul(layer_weights[i]);
+                }
+                else {
+                    layer_outputs[i] = layer_outputs[i-1].matmul(layer_weights[i]);
+                }
+                layer_outputs[i].add_row_vector_inplace(layer_biases[i]);
+
+                if (activations[i]=="relu") {
+                    layer_outputs[i].relu_inplace();
+                }
+                else if (activations[i]=="softmax") {
+                    layer_outputs[i].softmax_inplace();
+                }
+                //else if "linear", do nothing;
             }
+        }
+       
+        void BackwardPass(const Matrix& input_data_batch, const Matrix& output_data_batch) {
+            Matrix mse_loss_grad = (layer_outputs[layer_outputs.size()-1]-output_data_batch).scalarmul(2.0/output_data_batch.get_rows());
             
-            Layer h1 = Layer(input_data[0].size(),layer_sizes[0], activations[0], learning_rate);
-            layers.push_back(h1);
-            for (unsigned i = 1; i<layer_sizes.size(); i++) {
-                layers.push_back(Layer(layer_sizes[i-1],layer_sizes[i], activations[i], learning_rate));
-            }
-        }
+            for (int i = layer_weights.size()-1; i>0; i--) {
+                weight_updates[i] = layer_outputs[i-1].transpose().matmul(mse_loss_grad);
+                bias_updates[i] = mse_loss_grad.column_wise_sum();
 
-        void ForwardBackwardPass(size_t n) {
-            if (n>output_data.size()) {
-                throw std::invalid_argument("Can't train more entries then there are in the training dataset");
+                mse_loss_grad = mse_loss_grad.matmul(layer_weights[i].transpose());
             }
+            weight_updates[0] = input_data_batch.transpose().matmul(mse_loss_grad);
+            bias_updates[0] = mse_loss_grad.column_wise_sum();
             
-            for (size_t index = 0; index<n; index++) {
-                ForwardPass(input_data[index]);
-                BackwardPass(input_data[index],output_data[index]);
+            for (size_t i = 0; i<layer_weights.size(); i++) {
+                layer_weights[i]-=weight_updates[i].scalarmul(learning_rate);
+                layer_biases[i]-=bias_updates[i].scalarmul(learning_rate);
             }
         }
 
-        void ForwardPass(std::vector<double>& input_data) {
-            layers[0].ForwardPass(input_data);
-            for (unsigned i = 1; i<layers.size(); i++) {
-                layers[i].ForwardPass(layers[i-1].GetOutputs());
-            }
-        }
-
-        std::vector<double> TestSingle(std::vector<double> test_input) {
+        Matrix TestSingleBatch(const Matrix& test_input) {
             ForwardPass(test_input);
             return FinalOutput();
         }
 
-        std::vector<std::vector<double>> Test(std::vector<std::vector<double>>& test_input) {
-            std::vector<std::vector<double>> predicted_output;
+        Matrix Test(const Matrix& test_input, size_t batch_size) {
+            Matrix predicted_output(test_input.get_rows(), layer_weights[layer_weights.size()-1].get_cols());
 
-            for (const std::vector<double>& vec : test_input) {
-                predicted_output.push_back(TestSingle(vec));
+            std::vector<Matrix> batches;
+            for (size_t i = 0; i<test_input.get_rows(); i+=batch_size) {
+                batches.push_back(TestSingleBatch(test_input.splice_rows(i,i+batch_size)));
             }
 
-            return predicted_output;
-        }
-
-
-        void BackwardPass(std::vector<double>& input_data, std::vector<double>& output_data) {
-            std::vector<double> MSELoss_deriv;
-            for (size_t i = 0; i<layers[layers.size()-1].GetOutputs().size(); i++) {
-                MSELoss_deriv.push_back(2*(layers[layers.size()-1].GetOutputs()[i]-output_data[i]));
+            Matrix output = batches[0];
+            for (size_t i = 1; i<batches.size(); i++) {
+                output = output.combine_rows(batches[i]);
             }
-            layers[layers.size()-1].BackwardPass(MSELoss_deriv, layers[layers.size()-2].GetOutputs());
 
-            std::vector<double> old_a_deriv = MSELoss_deriv;
-            for (int k = layers.size()-2; k>=0; k--) {
-                std::vector<double> a_deriv;
-                a_deriv.resize(layers[k+1].GetNeurons().size());
-                for (size_t i = 0; i<layers[k+1].GetNeurons().size(); i++) {
-                    a_deriv[i] = dotProduct(old_a_deriv, layers[k+1].GetNeurons()[i].GetWeights());
+            return output;
+        }
+
+        double nmae_accuracy(const Matrix& input, const Matrix& output) {
+            Matrix predicted_output = Test(input, 1);
+            Matrix diff = output - predicted_output;
+
+            double sum = 0.0;
+            for (size_t i = 0; i<diff.get_rows(); i++) {
+                for (size_t j = 0; j<diff.get_cols(); j++) {
+                    sum+=std::abs(diff.at(i,j));
                 }
-                old_a_deriv = a_deriv;
-                if (k==0) {
-                    layers[k].BackwardPass(a_deriv, input_data);
-                }
-                else {
-                    layers[k].BackwardPass(a_deriv, layers[k-1].GetOutputs());
-                }
-                
             }
+            sum/=(diff.get_rows()*diff.get_cols());
+
+            return (sum/40.0)*100;
         }
 
-        std::vector<double> FinalOutput() {
-            return layers[layers.size()-1].GetOutputs();
+        Matrix FinalOutput() {
+            return layer_outputs[layer_outputs.size()-1];
         }
 
+        std::vector<Matrix> layer_weights;
+        std::vector<Matrix> layer_biases;
+        std::vector<Matrix> layer_outputs;
+
+        std::vector<Matrix> weight_updates;
+        std::vector<Matrix> bias_updates;
     private:
-        std::vector<std::vector<double>>& input_data;
-        std::vector<std::vector<double>>& output_data;
-        std::vector<Layer> layers;
+        
+        double learning_rate = 0.0;
+        std::vector<std::string> activations;
+        std::string loss;
 
+        
 };

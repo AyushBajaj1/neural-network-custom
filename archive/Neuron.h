@@ -8,6 +8,11 @@
 
 
 double dotProduct(const std::vector<double>& a, const std::vector<double>& b) {
+    if (a.size()!=b.size()) {
+        throw std::invalid_argument("vectors must be same size to be dot product'd");
+    }
+
+
     double result = 0.0;
     for (size_t i = 0; i<a.size(); i++) {
         result += a[i]*b[i];

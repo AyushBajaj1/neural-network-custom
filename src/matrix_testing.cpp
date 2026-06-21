@@ -5,19 +5,24 @@
 int main () {
     std::cout<<"Matrix Testing"<<std::endl;
 
-    Matrix A(1,4);
-    A.randfill(3); //20 is the range of values, so A will have random uniform values between -20 and 20
-    A.print();
-    A.softmax_();
-    A.print();
+    Matrix A(3,3);
+    A.randfill_inplace(10);
+    A.printblock();
+
+    A.column_wise_sum().printblock();
 
 
-    // Matrix B(4,3);
-    // B.randfill(10);
-    // B.print();
+    // Matrix A(3,3);
+    // A.randfill_inplace(10);
+    // A.printblock();
+    // std::cout<<std::endl;
 
-    // (A.matmul(B)).print();
+    // Matrix B(2,3);
+    // B.randfill_inplace(20);
+    // B.printblock();
+    // std::cout<<std::endl;
 
+    // A.combine_rows(B).printblock();
 
     return 0;
 }
