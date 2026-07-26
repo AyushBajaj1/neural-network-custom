@@ -1,30 +1,13 @@
-TARGET = main
+mnist: src/Matrix.cpp src/Network.cpp entry/mnist.cpp src/Matrix.h src/Network.h 
+	clang++ -std=c++20 -Wall -Wextra -Wpedantic -O3 src/Matrix.cpp src/Network.cpp entry/mnist.cpp -o mnist
 
-CXX = clang++
+london: src/Matrix.cpp src/Network.cpp src/Normalizer.cpp entry/london_housing.cpp src/Matrix.h src/Network.h src/Normalizer.h
+	clang++ -std=c++20 -Wall -Wextra -Wpedantic -O3 src/Matrix.cpp src/Network.cpp src/Normalizer.cpp entry/london_housing.cpp -o london
 
-CXXFLAGS = -std=c++20 -g -Wall -Wextra -O2 -MMD -MP -fsanitize=address,undefined
-
-SRCDIR = src
-BUILDDIR = build
-
-SRCS = $(SRCDIR)/main.cpp
-OBJS = $(SRCS:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
-DEPS = $(OBJS:.o=.d)
-
-all: $(TARGET)
-
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
-
--include $(DEPS)
-
-$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(BUILDDIR):
-	mkdir -p $(BUILDDIR)
+custom: src/Matrix.cpp src/Network.cpp entry/custom_data.cpp src/Matrix.h src/Network.h
+	clang++ -std=c++20 -Wall -Wextra -Wpedantic -O3 src/Matrix.cpp src/Network.cpp entry/custom_data.cpp -o custom
 
 clean:
-	rm -f $(OBJS) $(TARGET) $(DEPS)
-
-.PHONY: all clean
+	rm -f mnist
+	rm -f london
+	rm -f custom
