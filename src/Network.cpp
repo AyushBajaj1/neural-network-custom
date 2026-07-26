@@ -97,40 +97,7 @@
 
     Matrix Network::final_output() { return layer_outputs[layer_outputs.size()-1]; }
 
-    double Network::mae(const Matrix& input, const Matrix& output) {
-        Matrix predicted_output = predict(input);
-        Matrix diff = output - predicted_output;
-        diff = diff.abs();
-        return diff.mean();
-        // double mae = 0.0;
 
-        // for (size_t i = 0; i<diff.get_rows(); i++) {
-        //     mae+=std::abs(diff.at(i,0));
-        // }
-
-        // mae/=output.get_rows();
-
-        // return mae;
-    }
-
-    double Network::nmae(const Matrix& input, const Matrix& output) {
-        double range = 40;
-        return (mae(input,output)/range);
-    }
-
-    double Network::classification_accuracy(const Matrix& input, const Matrix& output) {
-        Matrix predicted_output = predict(input);
-        Matrix actual_output = output.hot_vector_to_digit();
-        predicted_output = predicted_output.hot_vector_to_digit();
-
-        int count = 0;
-        for (size_t i = 0; i<predicted_output.get_rows(); i++) {
-            if (predicted_output.at(i,0)==actual_output.at(i,0)) {
-                count++;
-            }
-        }
-
-        return static_cast<double>(count) / static_cast<double>(predicted_output.get_rows());
-    }
+    
 
     
