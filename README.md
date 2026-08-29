@@ -7,6 +7,9 @@
 ## Architecture
 The Neural Network class is built using a custom built Matrix class which provides all the useful linear algebra functions I needed to write the Neural Network 
 
+#### CUDA:
+- Currently the only cuda code in this repository is one Matrix.cu file which features a naive matmul kernel I wrote. I'm currently working on learning and implementing a faster kernel (tiling), and creating a full parallelized Matrix class with cuda. Right now the CUDA is just for show and isn't meaningfully used anywhere. 
+
 #### Matrix Class:
 - The Matrix class is just a 1d array of doubles on the heap under the hood, with rows and cols variables. The .at() method provides 2d indexing.
 - Used a cache friendly matmul (traversing in ikj order rather than ijk to avoid cache misses that come with column wise traversal which is really just row sized jumps on a 1d array) Cache friendly matmul **brought time down from 146.58s to 38.79s** on MNIST (1 hidden layer w/ 300 neurons, batch_size 32, epochs 10).
