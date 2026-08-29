@@ -6,6 +6,7 @@ class Network {
     public:
         Network(std::vector<size_t> layer_sizes, std::vector<std::string> hidden_activations, std::string loss);
         void fit(const Matrix& input_data, const Matrix& output_data, double learning_rate, size_t batch_size, size_t epochs);
+        
         Matrix predict(const Matrix& test_input);
         Matrix final_output();
         

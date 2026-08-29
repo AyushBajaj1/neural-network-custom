@@ -12,7 +12,7 @@ int main () {
     Matrix output_train = train.splice_cols(0,1); output_train=output_train.digit_to_one_hot_vector();
     Matrix output_test = test.splice_cols(0,1); output_test=output_test.digit_to_one_hot_vector();
     
-    std::vector<size_t> layer_sizes = {input_train.get_cols(),64,output_train.get_cols()}; 
+    std::vector<size_t> layer_sizes = {input_train.get_cols(),300,output_train.get_cols()}; 
     std::vector<std::string> hidden_activations = {"relu"}; 
     std::string loss = "cross-entropy";
     Network nn = Network(layer_sizes, hidden_activations, loss);

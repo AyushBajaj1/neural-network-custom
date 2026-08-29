@@ -12,7 +12,6 @@
         for (size_t i = 0; i<layer_sizes.size()-1; i++) {
             layer_weights[i] = Matrix(layer_sizes[i],layer_sizes[i+1]);
             layer_weights[i].randfill_inplace(std::sqrt(6.0/layer_sizes[0]));
-
             layer_biases[i] = Matrix(1,layer_sizes[i+1]);
         }
 
@@ -72,8 +71,11 @@
                 bias_updates[i] = loss_grad.column_wise_sum();
 
                 loss_grad = loss_grad.matmul(layer_weights[i].transpose());
-                layer_outputs[i-1].heavside_inplace();
-                loss_grad.hadamard_product_inplace(layer_outputs[i-1]);
+                if (activations[i-1]=="relu") {
+                    layer_outputs[i-1].heavside_inplace();
+                    loss_grad.hadamard_product_inplace(layer_outputs[i-1]);
+                }
+                
             }
             else {
                 weight_updates[0] = input_data_batch.transpose().matmul(loss_grad);

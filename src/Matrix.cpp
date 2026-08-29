@@ -36,6 +36,9 @@
             }  
             
             Matrix c(rows,other.cols);
+
+            //cache friendly indexing algorithm
+
             for (size_t i = 0; i<rows; i++) {
                 for (size_t k = 0; k<cols; k++) {
                     for (size_t j = 0; j<other.cols; j++) {
@@ -44,6 +47,8 @@
                 }
             }
 
+            //traditional matmul algorithm
+            
             // for (size_t i = 0; i<rows; i++) {
             //     for (size_t j = 0; j<other.cols; j++) {
             //         double sum = 0.0;
